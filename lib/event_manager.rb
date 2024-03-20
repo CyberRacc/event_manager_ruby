@@ -3,20 +3,48 @@
 require 'csv'
 require 'google/apis/civicinfo_v2'
 require 'erb'
+require 'date'
 
 def clean_zipcode(zipcode)
   zipcode.to_s.rjust(5, '0')[0..4]
 end
 
 def clean_phone_number(phone_number)
-  if phone_number < 10
-    'Bad number'
-  elsif phone_number.length == 10
+  # Remove any non-digit characters
+  phone_number.gsub!(/\D/, '')
+
+  case phone_number.length
+  when 10
     phone_number
-  elsif phone_number.length == 11 && phone_number[0] == '1'
-    phone_number[1..10]
+  when 11
+    phone_number[0] == '1' ? phone_number[1..10] : 'Bad number'
   else
     'Bad number'
+  end
+end
+
+# Find out which hours of the day the most people registered
+def find_peak_hours(contents)
+  registrations_per_hour = Hash.new(0)
+
+  contents.each do |row|
+    # Parse the registration date and time
+    registragion = DateTime.strptime(row[:regdate], '%m/%d/%y %H:%M')
+
+    # Increment the count for the hour of the day
+    registrations_per_hour[registragion.hour] += 1
+  end
+end
+
+def find_peak_days(contents)
+  registrations_per_day = Hash.new(0)
+
+  contents.each do |row|
+    # Parse the registration date and time
+    registragion = DateTime.strptime(row[:regdate], '%m/%d/%y %H:%M')
+
+    # Increment the count for the day of the week
+    registrations_per_day[registragion.wday] += 1
   end
 end
 
